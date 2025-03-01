@@ -30,7 +30,6 @@ change_time = pygame.time.get_ticks()
 WHITE = (255, 255, 255)
 text_color = (0, 0, 0)
 BLUE = (100, 100, 255)
-#current_background_color = WHITE
 
 # Police
 font = pygame.font.Font(None, 50)
@@ -43,26 +42,33 @@ MODES = {
     "Bleu Nuit": {"background": (10, 10, 50), "text": (200, 200, 255)}
 }
 
-# Mode actuel
-default_mode = "Sombre"
-current_mode = default_mode
-current_background_color = MODES[current_mode]["background"]
-text_color = MODES[current_mode]["text"]
 
-# Options du menu
-options = ["Choisir un automate", "Options", "Aide", "Quitter"]
-selected = 0
-choosing_automate = False
-chosen_automate = None
-choosing_options = False
-input_text = ""
-showing_help = False
-clock = pygame.time.Clock()
-mode_options = list(MODES.keys())
-selected_mode = 0
+class State:
+    def __init__(self):
+
+        # Options du menu
+        self.options = ["Choisir un automate", "Options", "Aide", "Quitter"]
+        self.selected = 0
+        self.choosing_automate = False
+        self.chosen_automate = None
+        self.choosing_options = False
+        self.input_text = ""
+        self.showing_help = False
+        self.clock = pygame.time.Clock()
+        self.mode_options = list(MODES.keys())
+        self.selected_mode = 0
+
+        # Mode actuel
+        self.default_mode = "Sombre"
+        self.current_mode = self.default_mode
+        self.current_background_color = MODES[self.current_mode]["background"]
+        self.text_color = MODES[self.current_mode]["text"]
+
+        self.running = True
 
 
-def draw_menu():
+
+def draw_menu(screen,state):
     """Affiche le menu avec le fond dynamique."""
     global background_index, change_time
 
@@ -75,20 +81,20 @@ def draw_menu():
     screen.blit(backgrounds[background_index], (0, 0))
 
     # Afficher le titre
-    title = font.render("Bienvenue!", True, text_color)
+    title = font.render("Bienvenue!", True, state.text_color)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
 
     # Afficher les options du menu
-    for i, option in enumerate(options):
-        color = BLUE if i == selected else text_color
+    for i, option in enumerate(state.options):
+        color = BLUE if i == state.selected else state.text_color
         text = font.render(option, True, color)
         screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
 
     pygame.display.flip()
 
 
-def draw_help():
-    screen.fill(current_background_color)
+def draw_help(screen, state):
+    screen.fill(state.current_background_color)
 
     help_text = [
         "Le but de ce code est de manipuler ",
@@ -100,7 +106,7 @@ def draw_help():
 
     y_offset = HEIGHT // 3  # Position de départ
     for line in help_text:
-        rendered_text = font.render(line, True, text_color)
+        rendered_text = font.render(line, True, state.text_color)
         screen.blit(rendered_text, (5, y_offset))
         y_offset += 50  # Espacement entre les lignes
 
@@ -110,39 +116,40 @@ def draw_help():
     pygame.display.flip()
 
 
-def draw_input_box():
-    screen.fill(current_background_color)
-    prompt = font.render("Entrez un numéro entre 1 et 45:", True, text_color)
+def draw_input_box(screen, state):
+    screen.fill(state.current_background_color)
+    prompt = font.render("Entrez un numéro entre 1 et 45:", True, state.text_color)
     screen.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT // 3))
 
-    input_surface = input_font.render(input_text, True, BLUE)
+    input_surface = input_font.render(state.input_text, True, BLUE)
     screen.blit(input_surface, (WIDTH // 2 - input_surface.get_width() // 2, HEIGHT // 2))
 
     pygame.display.flip()
 
 
-def draw_automate_menu():
-    screen.fill(current_background_color)
-    title = font.render(f"Automate {chosen_automate}", True, text_color)
+
+def draw_automate_menu(screen,state):
+    screen.fill(state.current_background_color)
+    title = font.render(f"Automate {state.chosen_automate}", True, state.text_color)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
     sub_options = ["Afficher l'automate", "Afficher sa table", "Transformer l'automate", "Aide",
                    "Retour au menu principal", "Quitter"]
 
     for i, option in enumerate(sub_options):
-        color = BLUE if i == selected else text_color
+        color = BLUE if i == state.selected else state.text_color
         text = font.render(option, True, color)
         screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
 
     pygame.display.flip()
 
 
-def draw_options_menu():
-    screen.fill(current_background_color)
-    title = font.render("Choisir un Mode:", True, text_color)
+def draw_options_menu(screen,state):
+    screen.fill(state.current_background_color)
+    title = font.render("Choisir un Mode:", True, state.text_color)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
 
-    for i, mode in enumerate(mode_options):
-        color = (100, 100, 255) if i == selected_mode else text_color
+    for i, mode in enumerate(state.mode_options):
+        color = (100, 100, 255) if i == state.selected_mode else state.text_color
         text = font.render(mode, True, color)
         screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
 

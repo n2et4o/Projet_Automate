@@ -1,238 +1,90 @@
-import pygame
-import time
-import random
+from Interfaces_graphiques import *
 
-# Initialisation de Pygame
-pygame.init()
-
-# Paramètres de la fenêtre
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Menu Principal")
-
-# Charger les images de fond
-backgrounds = [
-    pygame.image.load("background/background1.jpg"),
-    pygame.image.load("background/background2.jpg"),
-    pygame.image.load("background/background3.jpg"),
-    pygame.image.load("background/background4.jpg"),
-    pygame.image.load("background/background5.jpg"),
-    pygame.image.load("background/background6.jpg"),
-    pygame.image.load("background/background7.jpg"),
-]
-backgrounds = [pygame.transform.scale(bg, (WIDTH, HEIGHT)) for bg in backgrounds]
-
-# Variables de gestion du fond
-background_index = 0
-change_time = pygame.time.get_ticks()
-
-# Couleurs
-WHITE = (255, 255, 255)
-text_color = (0, 0, 0)
-BLUE = (100, 100, 255)
-#current_background_color = WHITE
-
-# Police
-font = pygame.font.Font(None, 50)
-input_font = pygame.font.Font(None, 40)
-
-# Modes de couleurs
-MODES = {
-    "Clair": {"background": (255, 255, 255), "text": (0, 0, 0)},
-    "Sombre": {"background": (30, 30, 30), "text": (255, 255, 255)},
-    "Bleu Nuit": {"background": (10, 10, 50), "text": (200, 200, 255)}
-}
-
-# Mode actuel
-default_mode = "Sombre"
-current_mode = default_mode
-current_background_color = MODES[current_mode]["background"]
-text_color = MODES[current_mode]["text"]
-
-# Options du menu
-options = ["Choisir un automate", "Options", "Aide", "Quitter"]
-selected = 0
-choosing_automate = False
-chosen_automate = None
-choosing_options = False
-input_text = ""
-showing_help = False
-clock = pygame.time.Clock()
-mode_options = list(MODES.keys())
-selected_mode = 0
-
-
-def draw_menu():
-    """Affiche le menu avec le fond dynamique."""
-    global background_index, change_time
-
-    # Vérifier si 5 secondes sont écoulées
-    if pygame.time.get_ticks() - change_time >= 3000:
-        background_index = (background_index + 1) % len(backgrounds)
-        change_time = pygame.time.get_ticks()  # Mettre à jour le temps
-
-    # Afficher l'image de fond
-    screen.blit(backgrounds[background_index], (0, 0))
-
-    # Afficher le titre
-    title = font.render("Bienvenue!", True, text_color)
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
-
-    # Afficher les options du menu
-    for i, option in enumerate(options):
-        color = BLUE if i == selected else text_color
-        text = font.render(option, True, color)
-        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
-
-    pygame.display.flip()
-
-
-def draw_help():
-    screen.fill(current_background_color)
-
-    help_text = [
-        "Le but de ce code est de manipuler ",
-        "des automates en déterminant s'ils ",
-        "sont déterministes, standards, complets ",
-        "ou non, ou de les transformer, de les",
-        "minimaliser ou d'obtenir leur complémentaire."
-    ]
-
-    y_offset = HEIGHT // 3  # Position de départ
-    for line in help_text:
-        rendered_text = font.render(line, True, text_color)
-        screen.blit(rendered_text, (5, y_offset))
-        y_offset += 50  # Espacement entre les lignes
-
-    back_text = font.render("Appuyez sur Retour pour revenir", True, BLUE)
-    screen.blit(back_text, (10, y_offset + 15))
-
-    pygame.display.flip()
-
-
-def draw_input_box():
-    screen.fill(current_background_color)
-    prompt = font.render("Entrez un numéro entre 1 et 45:", True, text_color)
-    screen.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT // 3))
-
-    input_surface = input_font.render(input_text, True, BLUE)
-    screen.blit(input_surface, (WIDTH // 2 - input_surface.get_width() // 2, HEIGHT // 2))
-
-    pygame.display.flip()
-
-
-def draw_automate_menu():
-    screen.fill(current_background_color)
-    title = font.render(f"Automate {chosen_automate}", True, text_color)
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
-    sub_options = ["Afficher l'automate", "Afficher sa table", "Transformer l'automate", "Aide",
-                   "Retour au menu principal", "Quitter"]
-
-    for i, option in enumerate(sub_options):
-        color = BLUE if i == selected else text_color
-        text = font.render(option, True, color)
-        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
-
-    pygame.display.flip()
-
-
-def draw_options_menu():
-    screen.fill(current_background_color)
-    title = font.render("Choisir un Mode:", True, text_color)
-    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
-
-    for i, mode in enumerate(mode_options):
-        color = (100, 100, 255) if i == selected_mode else text_color
-        text = font.render(mode, True, color)
-        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 200 + i * 60))
-
-    pygame.display.flip()
-
+state = State()  # Crée un objet contenant les états
 # Boucle principale
 running = True
 while running:
-    if choosing_options:
-        draw_options_menu()
-    elif showing_help:
-        draw_help()
-    elif choosing_automate:
-        draw_input_box()
+    if state.choosing_options:
+        draw_options_menu(screen, state)
+    elif state.showing_help:
+        draw_help(screen, state)
+    elif state.choosing_automate:
+        draw_input_box(screen, state)
     else:
-        draw_menu()
+        draw_menu(screen, state)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.KEYDOWN:
-            if showing_help:
+            if state.showing_help:
                 if event.key == pygame.K_BACKSPACE:
-                    showing_help = False
+                    state.showing_help = False
 
-            elif choosing_automate:
+            elif state.choosing_automate:
                 if event.key == pygame.K_RETURN:
                     try:
-                        chosen_automate = int(input_text)
-                        if 1 <= chosen_automate <= 45:
-                            choosing_automate = False
-                            options = ["Afficher l'automate", "Afficher sa table", "Transformer l'automate", "Aide", "Retour au menu principal", "Quitter"]
-                            selected = 0
-                            input_text = ""
+                        state.chosen_automate = int(state.input_text)
+                        if 1 <= state.chosen_automate <= 45:
+                            state.choosing_automate = False
+                            state.options = ["Afficher l'automate", "Afficher sa table", "Transformer l'automate", "Aide", "Retour au menu principal", "Quitter"]
+                            state.selected = 0
+                            state.input_text = ""
                         else:
-                            input_text = ""
+                            state.input_text = ""
                     except ValueError:
-                        input_text = ""
+                        state.input_text = ""
                 elif event.key == pygame.K_BACKSPACE:
-                    input_text = input_text[:-1]
+                    state.input_text = state.input_text[:-1]
                 else:
-                    input_text += event.unicode
+                    state.input_text += event.unicode
 
-            elif choosing_options:
+            elif state.choosing_options:
                 if event.key == pygame.K_DOWN:
-                    selected_mode = (selected_mode + 1) % len(mode_options)
+                    state.selected_mode = (state.selected_mode + 1) % len(state.mode_options)
                 elif event.key == pygame.K_UP:
-                    selected_mode = (selected_mode - 1) % len(mode_options)
+                    state.selected_mode = (state.selected_mode - 1) % len(state.mode_options)
                 elif event.key == pygame.K_RETURN:
-                    current_mode = mode_options[selected_mode]
-                    current_background_color = MODES[current_mode]["background"]
-                    text_color = MODES[current_mode]["text"]
-                    choosing_options = False
+                    state.current_mode = state.mode_options[state.selected_mode]
+                    state.current_background_color = MODES[state.current_mode]["background"]
+                    state.text_color = MODES[state.current_mode]["text"]
+                    state.choosing_options = False
                 elif event.key == pygame.K_BACKSPACE:
-                    choosing_options = False
+                    state.choosing_options = False
 
             else:  # Gestion du menu principal
                 if event.key == pygame.K_DOWN:
-                    selected = (selected + 1) % len(options)
+                    state.selected = (state.selected + 1) % len(state.options)
                 elif event.key == pygame.K_UP:
-                    selected = (selected - 1) % len(options)
+                    state.selected = (state.selected - 1) % len(state.options)
                 elif event.key == pygame.K_RETURN:
-                    if chosen_automate is None:  # Menu principal
-                        if selected == 0:
-                            choosing_automate = True
-                        elif selected == 1:
-                            choosing_options = True
-                        elif selected == 2:
-                            showing_help = True
-                        elif selected == 3:  # Quitter depuis le menu principal
+                    if state.chosen_automate is None:  # Menu principal
+                        if state.selected == 0:
+                            state.choosing_automate = True
+                        elif state.selected == 1:
+                            state.choosing_options = True
+                        elif state.selected == 2:
+                            state.showing_help = True
+                        elif state.selected == 3:  # Quitter depuis le menu principal
                             running = False
 
-                    elif chosen_automate is not None:  # Sous-menu après choix d'un automate
-                        if selected == 0:
-                            print(f"Affichage de l'automate {chosen_automate}")
-                        elif selected == 1:
-                            print(f"Affichage de la table de l'automate {chosen_automate}")
-                        elif selected == 2:
-                            print(f"Transformation de l'automate {chosen_automate}")
-                        elif selected == 3:
-                            showing_help = True
-                        elif selected == 4:
-                            chosen_automate = None
-                            options = ["Choisir un automate", "Options", "Aide", "Quitter"]
-                        elif selected == 5:  # Quitter depuis le sous-menu
+                    elif state.chosen_automate is not None:  # Sous-menu après choix d'un automate
+                        if state.selected == 0:
+                            print(f"Affichage de l'automate {state.chosen_automate}")
+                        elif state.selected == 1:
+                            print(f"Affichage de la table de l'automate {state.chosen_automate}")
+                        elif state.selected == 2:
+                            print(f"Transformation de l'automate {state.chosen_automate}")
+                        elif state.selected == 3:
+                            state.showing_help = True
+                        elif state.selected == 4:
+                            state.chosen_automate = None
+                            state.options = ["Choisir un automate", "Options", "Aide", "Quitter"]
+                        elif state.selected == 5:  # Quitter depuis le sous-menu
                             running = False
 
-    clock.tick(60)  # Limite à 60 FPS
+    state.clock.tick(60)  # Limite à 60 FPS
 
 pygame.quit()
 exit()
-
